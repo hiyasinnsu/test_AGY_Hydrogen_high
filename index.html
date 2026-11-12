@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#040712">
+  <title>STARFALL // NEON BARRAGE</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23040712'/%3E%3Cpolygon points='32,8 52,50 32,41 12,50' fill='%2322d3ee' stroke='%23ffffff' stroke-width='2'/%3E%3Ccircle cx='32' cy='31' r='4' fill='%23f43f5e'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div id="app" class="arcade-shell">
+    <main class="game-stage" id="game-stage">
+      <canvas id="game-canvas" aria-label="Neon Barrage Danmaku Shooter"></canvas>
+
+      <!-- In-game Top HUD -->
+      <header id="hud-top" class="hud-top hidden" aria-live="off">
+        <div class="hud-row">
+          <div class="hud-cell">
+            <span class="hud-label">SCORE</span>
+            <span id="hud-score" class="hud-value">0000000</span>
+          </div>
+          <div class="hud-cell hud-center">
+            <span class="hud-label">STAGE <span id="hud-stage">1</span></span>
+            <span id="hud-hiscore" class="hud-value hud-dim">HI 0000000</span>
+          </div>
+          <div class="hud-actions">
+            <button id="btn-pause" class="icon-btn" type="button" aria-label="Pause">II</button>
+          </div>
+        </div>
+        <div class="hud-row hud-subrow">
+          <div class="hud-stat">
+            <span class="hud-label">LIFE</span>
+            <span id="hud-lives" class="hud-pips"></span>
+          </div>
+          <div class="hud-stat">
+            <span class="hud-label">BOMB</span>
+            <span id="hud-bombs" class="hud-pips hud-pips-bomb"></span>
+          </div>
+          <div class="hud-stat">
+            <span class="hud-label">PWR</span>
+            <span id="hud-power" class="hud-mini">1.0</span>
+          </div>
+          <div class="hud-stat">
+            <span class="hud-label">GRZ</span>
+            <span id="hud-graze" class="hud-mini">0</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Mobile Touch Action Controls -->
+      <div id="touch-controls" class="touch-controls hidden">
+        <button id="btn-focus" class="action-pad action-focus" type="button" aria-label="Focus slow mode">
+          <span class="action-title">FOCUS</span>
+          <span class="action-sub">精密</span>
+        </button>
+        <button id="btn-bomb" class="action-pad action-bomb" type="button" aria-label="Trigger Bomb">
+          <span class="action-title">BOMB</span>
+          <span id="btn-bomb-count" class="action-sub">x3</span>
+        </button>
+      </div>
+
+      <!-- Title Overlay -->
+      <section id="screen-title" class="overlay-screen">
+        <div class="panel panel-title">
+          <div class="title-header">
+            <p class="title-eyebrow">VERTICAL DANMAKU SHOOTER</p>
+            <h1 class="game-title">STARFALL<span class="title-accent">NEON BARRAGE</span></h1>
+          </div>
+
+          <div class="hiscore-bar">
+            <span class="hiscore-label">HI-SCORE (<span id="title-diff-label">NORMAL</span>)</span>
+            <span id="title-hiscore" class="hiscore-val">0000000</span>
+          </div>
+
+          <div class="control-group">
+            <span class="group-label">DIFFICULTY</span>
+            <div class="segmented" role="group" aria-label="Difficulty">
+              <button class="seg-btn" type="button" data-diff="easy">EASY</button>
+              <button class="seg-btn active" type="button" data-diff="normal">NORMAL</button>
+              <button class="seg-btn" type="button" data-diff="hard">HARD</button>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <div class="control-group compact">
+              <span class="group-label">SENSITIVITY</span>
+              <div class="segmented" role="group" aria-label="Touch Sensitivity">
+                <button class="seg-btn active" type="button" data-sens="1">1.0x</button>
+                <button class="seg-btn" type="button" data-sens="1.25">1.25x</button>
+                <button class="seg-btn" type="button" data-sens="1.5">1.5x</button>
+              </div>
+            </div>
+            <div class="control-group compact sound-group">
+              <span class="group-label">SOUND</span>
+              <button id="btn-title-sound" class="toggle-btn" type="button" aria-pressed="true">ON</button>
+            </div>
+          </div>
+
+          <div class="guide-box">
+            <div class="guide-item"><span class="guide-key">DRAG</span><span>画面どこでもドラッグで相対移動</span></div>
+            <div class="guide-item"><span class="guide-key">FOCUS</span><span>ボタン長押し / 2本指で低速精密移動</span></div>
+            <div class="guide-item"><span class="guide-key">BOMB</span><span>右下ボタンで緊急回避＆弾消し</span></div>
+            <div class="guide-item guide-pc"><span class="guide-key">PC</span><span>矢印/WASD・Shift(低速)・X/Space(ボム)・P(ポーズ)</span></div>
+          </div>
+
+          <button id="btn-start" class="primary-btn" type="button">START MISSION</button>
+        </div>
+      </section>
+
+      <!-- Pause Overlay -->
+      <section id="screen-pause" class="overlay-screen hidden">
+        <div class="panel panel-modal">
+          <h2 class="modal-title">PAUSED</h2>
+          <div class="modal-actions">
+            <button id="btn-resume" class="primary-btn" type="button">RESUME</button>
+            <button id="btn-restart" class="secondary-btn" type="button">RESTART</button>
+            <div class="modal-row">
+              <button id="btn-pause-sound" class="secondary-btn" type="button">SOUND: ON</button>
+              <button id="btn-pause-sens" class="secondary-btn" type="button">SENS: 1.0x</button>
+            </div>
+            <button id="btn-pause-title" class="ghost-btn" type="button">BACK TO TITLE</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Result (Game Over / Victory) Overlay -->
+      <section id="screen-result" class="overlay-screen hidden">
+        <div class="panel panel-modal">
+          <p id="result-eyebrow" class="title-eyebrow">MISSION REPORT</p>
+          <h2 id="result-title" class="modal-title">GAME OVER</h2>
+          <div id="result-new-record" class="record-tag hidden">NEW HI-SCORE!</div>
+
+          <dl class="result-stats">
+            <div class="stat-row">
+              <dt>SCORE</dt>
+              <dd id="result-score">0</dd>
+            </div>
+            <div class="stat-row">
+              <dt>HI-SCORE</dt>
+              <dd id="result-hiscore">0</dd>
+            </div>
+            <div class="stat-row">
+              <dt>GRAZE</dt>
+              <dd id="result-graze">0</dd>
+            </div>
+            <div class="stat-row">
+              <dt>STAGE / MODE</dt>
+              <dd id="result-meta">ST.1 / NORMAL</dd>
+            </div>
+          </dl>
+
+          <div class="modal-actions">
+            <button id="btn-retry" class="primary-btn" type="button">RETRY</button>
+            <button id="btn-result-title" class="ghost-btn" type="button">TITLE</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
